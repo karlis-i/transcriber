@@ -1,0 +1,30 @@
+{
+  "name": "music-transcriber",
+  "version": "0.0.1",
+  "description": "Electron.js based Music Transcriber and Trainer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karlis-i/transcriber.git"
+  },
+  "keywords": [
+    "music",
+    "transcription"
+  ],
+  "author": "karlis-i (https://github.com/karlis-i/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/karlis-i/transcriber/issues"
+  },
+  "homepage": "https://github.com/karlis-i/transcriber#readme",
+  "devDependencies": {
+    "electron": "^40.1.0"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.8"
+  }
+}
