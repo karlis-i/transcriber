@@ -18,14 +18,19 @@
             rel="stylesheet"
         >
         <!-- @todo move .css files to project root dir later -->
+        <link href="./style.css" rel="stylesheet">
     </head>
 
     <body>
 
+        <!-- audio element -->
+        <audio id="audioElement" crossorigin="anonymous"></audio>
+
         <!-- waveform -->
         <div>
-            <div class="container-lg">
-                [waveform]
+            <div class="container-lg" id="waveFormContainer">
+                <div id="zoomview-container"></div>
+                <div id="overview-container"></div>
             </div>
         </div>
 
@@ -40,7 +45,7 @@
                         <div>
                             <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Rewind to Start">&#x23EE;</button>
                             <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Rewind to Selection Start / Previous Marker">&#x23EA;</button>
-                            <button type="button" class="btn btn-primary btn-lg rounded-circle" aria-label="Play / Pause">&#x25B6; / &#x23F8;</button>
+                            <button id="playPauseBtn" type="button" class="btn btn-primary btn-lg rounded-circle" aria-label="Play / Pause">&#x25B6; / &#x23F8;</button>
                             <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Forward to Selection End / Next Marker">&#x23E9;</button>
                             <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Forward to End">&#x23ED;</button>
                         </div>
@@ -114,6 +119,7 @@
         <script
             src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
         ></script>
+        <script src="./node_modules/peaks.js/peaks.js"></script>
         <!-- @todo move .js files to project root dir later -->
 
         <script src="./renderer.js"></script>
