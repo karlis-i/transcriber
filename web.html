@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+        <!-- <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self'"
+        />
+        <meta
+            http-equiv="X-Content-Security-Policy"
+            content="default-src 'self'; script-src 'self'"
+        /> -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Music Transcriber & Trainer</title>
+        <link
+            href="./node_modules/bootstrap/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        >
+        <!-- @todo move .css files to project root dir later -->
+        <!-- <link href="./style.css" rel="stylesheet"> -->
+        <style>
+
+#audioFileInput {
+    display: none;
+}
+
+#zoomview-container, #overview-container {
+    width: 100%;
+    height: 100px;
+}
+        </style>
+    </head>
+
+    <body>
+
+        <!-- waveform -->
+        <div>
+            <div class="container-lg" id="waveFormContainer">
+                <div id="zoomview-container"></div>
+                <div id="overview-container"></div>
+            </div>
+        </div>
+
+
+        <!-- transport -->
+        <div>
+            <div class="container-lg">
+                <div class="row">
+                    <div class="col-12 col-lg-6 order-lg-2 text-center">
+                        <!-- 50% C -->
+                        <div class="time_indicator">1:23:45 of 5:43:21</div>
+                        <div>
+                            <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Rewind to Start">&#x23EE;</button>
+                            <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Rewind to Selection Start / Previous Marker">&#x23EA;</button>
+                            <button id="playPauseBtn" type="button" class="btn btn-primary btn-lg rounded-circle" aria-label="Play / Pause">&#x25B6; / &#x23F8;</button>
+                            <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Forward to Selection End / Next Marker">&#x23E9;</button>
+                            <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Forward to End">&#x23ED;</button>
+                        </div>
+                        <!-- <div>
+                            <button id="audioFileBtn">&#x23CF;</button>
+                            <input type="text" id="audioFileLbl" readonly>
+                            <label for="audioFileInput" class="form-label">File:</label>
+                            <input class="form-control" type="file" id="audioFileInput" accept="audio/*">
+                            <audio id="audioElement" crossorigin="anonymous"></audio>
+                        </div> -->
+
+                        <div class="mb-3">
+                            <label for="audioFileInput" class="form-label">File:</label>
+                            <div class="input-group">
+                                <input id="audioFileLbl" type="text" class="form-control" readonly>
+                                <button class="btn btn-outline-secondary" type="button" id="audioFileBtn">&#x23CF;</button>
+                            </div>
+                            <input class="form-control" type="file" id="audioFileInput" accept="audio/*">
+                            <audio id="audioElement" crossorigin="anonymous"></audio>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3 order-lg-1">
+                        <!-- 25% L -->
+                        <div class="mb-3">
+                            <label for="rangeVolume" class="form-label">Volume</label>
+                            <output for="rangeVolume" id="outputVolume" aria-hidden="true" class="form-text float-end">100</output>
+                            <input type="range" class="form-range" min="0" max="127" step="1" value="100" id="rangeVolume">
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3 order-lg-3">
+                        <!-- 25% R -->
+                        .
+                    </div>
+                </div>
+            </div> <!-- .container-lg -->
+        </div>
+
+        Volume Down
+        Volume Level
+        Volume Up
+
+        Speed Down
+        Speed Level
+        Speed Up
+
+        Pitch Down
+        Pitch Level
+        Pitch Up
+
+        Zoom Out
+        Zoom Level
+        Zoom In
+
+        Mono
+        Stereo
+        Left Channel Only
+        Right Channel Only
+        Center Only
+        Stereo Minus Right Channel
+        Stereo Minus Left Channel
+
+        <!-- Help > About -->
+        <!-- <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalAbout">About</a> -->
+        <div class="modal fade" id="modalAbout" tabindex="-1" aria-labelledby="modalAboutLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="modalAboutLabel">About</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Music Transcriber &amp; Trainer</p>
+                        <p>v0.1</p>
+                        <p><a href="https://www.github.com/karlis-i" target="_blank">https://www.github.com/karlis-i</a></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <script
+            src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+        ></script>
+        <script src="./node_modules/peaks.js/dist/peaks.min.js"></script>
+        <!-- <script src="./node_modules/peaks.js/peaks.js"></script> -->
+        <!-- @todo move .js files to project root dir later -->
+
+        <!-- <script src="./renderer.js"></script> -->
+<script>
+
+// Volume
+let volume = 100;
+let volumeInput = null;
+let volumeOutput = null;
+
+// Speed
+// Pitch
+
+function setupRangeOutputs() {
+    // Volume
+
+    // assign DOM elements
+    volumeInput = document.getElementById('rangeVolume');
+    volumeOutput = document.getElementById('outputVolume');
+
+    // display init value
+    volumeOutput.textContent = volumeInput.value;
+
+    // start listening
+    volumeInput.addEventListener('input', function () {
+        volume = this.value;
+        volumeOutput.textContent = this.value;
+        console.log("Volume", volume);
+    });
+}
+
+let audioFileInput = null;
+let audioFileBtn = null;
+let audioFileLbl = null;
+let audioElement = null;
+let audioFile = null;
+
+function setupAudioElements() {
+
+    audioFileInput = document.getElementById('audioFileInput');
+    audioFileBtn = document.getElementById('audioFileBtn');
+    audioFileLbl = document.getElementById('audioFileLbl');
+    audioElement = document.getElementById('audioElement');
+
+    // use button instead of file input
+    audioFileBtn.addEventListener('click', function(e){
+        if (audioFileInput) {
+            audioFileInput.click();
+        }
+    });
+
+    // when audio loaded
+    audioFileInput.addEventListener('change', function(){
+        console.log(audioFile);
+
+        // get file
+        audioFile = audioFileInput.files[0];
+
+        // display filename
+        audioFileLbl.value = audioFile.name;
+
+        // load file in audio element
+        audioElement.src = URL.createObjectURL(audioFile);
+        audioElement.controls = true;
+
+        drawWaveForm();
+    });
+}
+
+function drawWaveForm() {
+    const audioContext = new AudioContext();
+
+    (function (Peaks) {
+        const options = {
+            zoomview: {
+                container: document.getElementById('zoomview-container')
+            },
+            overview: {
+                container: document.getElementById('overview-container')
+            },
+            mediaElement: audioElement,
+            webAudio: {
+                audioContext: audioContext,
+                scale: 128,
+                multiChannel: false
+            }
+        };
+
+        Peaks.init(options, function (err, peaks) {
+            if (err) {
+                console.error(`Failed to initialize Peaks instance: ${err.message}`);
+                return;
+            }
+
+            // Do something when the waveform is displayed and ready
+        });
+    })(peaks);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    setupRangeOutputs();
+    setupAudioElements();
+});
+
+</script>
+    </body>
+</html>
