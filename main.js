@@ -10,13 +10,16 @@ app.commandLine.appendSwitch('disable-features', 'VaapiVideoDecoder');
 const createWindow = () => {
     const win = new BrowserWindow({
         width: 1140,
-        height: 855,
+        height: 690,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js')
         }
     })
 
     win.loadFile('index.html')
+
+    // dev tools
+    win.webContents.openDevTools()
 }
 
 // Handle file open dialog

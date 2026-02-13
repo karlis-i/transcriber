@@ -4,9 +4,6 @@ let volume = 100;
 let volumeInput = null;
 let volumeOutput = null;
 
-// Waveform
-let peaksInstance = null;
-
 // Speed
 // Pitch
 
@@ -23,31 +20,97 @@ function setupRangeOutputs() {
     // start listening
     volumeInput.addEventListener('input', function () {
         volume = this.value;
-        volumeOutput.textContent = this.value;
-        console.log("Volume", volume);
+        volumeOutput.textContent = volume;
+        audioElement.volume = volume / 100;
     });
 }
 
-// Initialize and draw waveform using Peaks.js
-async function initializeWaveform(fileUrl) {
-    const audioElement = document.getElementById('audioElement');
+let audioFileInput = null;
+let audioFileBtn = null;
+let audioFileLbl = null;
+let audioElement = null;
+let audioFile = null;
 
-    // Destroy existing peaks instance if it exists
-    if (peaksInstance) {
-        peaksInstance.destroy();
-        peaksInstance = null;
-    }
+function setupAudioElements() {
 
-    try {
-        // Set the audio source
-        audioElement.src = fileUrl;
+    audioFileInput = document.getElementById('audioFileInput');
+    audioFileBtn = document.getElementById('audioFileBtn');
+    audioFileLbl = document.getElementById('audioFileLbl');
+    audioElement = document.getElementById('audioElement');
 
-        console.log('Initializing Peaks.js with file:', fileUrl);
+    // use button instead of file input
+    audioFileBtn.addEventListener('click', function(e){
+        if (audioFileInput) {
+            audioFileInput.click();
+        }
+    });
 
-        // Create audio context for Web Audio API
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    // when audio loaded
+    audioFileInput.addEventListener('change', function(){
 
-        // Initialize Peaks.js with proper configuration
+        // get file
+        audioFile = audioFileInput.files[0];
+
+        // display filename
+        audioFileLbl.value = audioFile.name;
+
+        // load file in audio element
+        audioElement.src = URL.createObjectURL(audioFile);
+        audioElement.controls = true;
+
+        drawWaveForm();
+
+        // remove focus from file input
+        audioFileInput.blur();
+    });
+}
+
+let btnPlayPause = null;
+let btnRewind = null;
+let btnForward = null;
+let playing = false;
+
+function setupTransport() {
+    btnPlayPause = document.getElementById("btnPlayPause");
+    btnRewind = document.getElementById("btnRewind");
+    btnForward = document.getElementById("btnForward");
+
+    const playString = "&#x25B6;";
+    const pauseString = "&#x23F8;";
+
+    // play/pause
+    btnPlayPause.addEventListener("click", function (){
+        if (audioElement.currentSrc) {
+            if (audioElement.paused) {
+                audioElement.play();
+                btnPlayPause.innerHTML = pauseString;
+                btnPlayPause.classList.remove("btn-outline-primary");
+                btnPlayPause.classList.add("btn-success");
+            } else {
+                audioElement.pause();
+                btnPlayPause.innerHTML = playString;
+                btnPlayPause.classList.remove("btn-success");
+                btnPlayPause.classList.add("btn-outline-primary");
+            }
+            playing = !playing;
+        }
+    });
+
+    // rewind
+    btnRewind.addEventListener("click", function(){
+        audioElement.currentTime = 0;
+    });
+
+    // forward
+    btnForward.addEventListener("click", function(){
+        audioElement.currentTime += 5;
+    });
+}
+
+function drawWaveForm() {
+    const audioContext = new AudioContext();
+
+    (function (Peaks) {
         const options = {
             zoomview: {
                 container: document.getElementById('zoomview-container')
@@ -55,6 +118,12 @@ async function initializeWaveform(fileUrl) {
             overview: {
                 container: document.getElementById('overview-container')
             },
+            scrollbar: {
+                container: document.getElementById('scrollbar-container'),
+                color: '#888',
+                minWidth: 100
+            },
+            showPlayheadTime: true,
             mediaElement: audioElement,
             webAudio: {
                 audioContext: audioContext,
@@ -63,101 +132,30 @@ async function initializeWaveform(fileUrl) {
             }
         };
 
-        peaksInstance = Peaks.init(options, function(err, peaks) {
+        Peaks.init(options, function (err, peaks) {
             if (err) {
-                console.error('Failed to initialize Peaks.js:', err.message);
+                console.error(`Failed to initialize Peaks instance: ${err.message}`);
                 return;
             }
-            console.log('Peaks.js initialized successfully');
+
+            // Do something when the waveform is displayed and ready
         });
-
-    } catch (error) {
-        console.error('Error initializing waveform:', error);
-    }
+    })(peaks);
 }
 
-// Handle play/pause button
-function setupPlayPauseButton() {
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const audioElement = document.getElementById('audioElement');
-
-    if (!playPauseBtn) {
-        console.warn('Play/Pause button not found');
-        return;
-    }
-
-    playPauseBtn.addEventListener('click', () => {
-        if (audioElement.paused) {
-            audioElement.play();
-            console.log('Playing audio');
-        } else {
-            audioElement.pause();
-            console.log('Paused audio');
-        }
-    });
-
-    // Update button appearance based on play/pause state
-    audioElement.addEventListener('play', () => {
-        playPauseBtn.classList.remove('btn-primary');
-        playPauseBtn.classList.add('btn-danger');
-        playPauseBtn.textContent = '⏸';
-        playPauseBtn.setAttribute('aria-label', 'Pause');
-    });
-
-    audioElement.addEventListener('pause', () => {
-        playPauseBtn.classList.remove('btn-danger');
-        playPauseBtn.classList.add('btn-primary');
-        playPauseBtn.textContent = '▶';
-        playPauseBtn.setAttribute('aria-label', 'Play');
-    });
-}
-
-// Handle audio file loading
-function setupAudioFileInput() {
-    const audioFileInput = document.getElementById('audioFile');
-
-    audioFileInput.addEventListener('click', async (e) => {
-        // Prevent the default file picker
-        e.preventDefault();
-
-        const filePath = await window.electronAPI.openFile();
-        if (filePath) {
-            console.log('Loading file:', filePath);
-            
-            // Extract just the filename to display
-            const fileName = filePath.split('\\').pop();
-            audioFileInput.value = '';  // Clear the input
-            
-            // Create a mock file list display
-            const fileLabel = document.createElement('span');
-            fileLabel.textContent = ` - ${fileName}`;
-            fileLabel.id = 'selectedFileName';
-            
-            // Remove old label if exists
-            const oldLabel = document.getElementById('selectedFileName');
-            if (oldLabel) oldLabel.remove();
-            
-            // Add new label next to input
-            audioFileInput.parentElement.appendChild(fileLabel);
-            
-            // Convert file path to file:// URL for audio element
-            const fileUrl = 'file:///' + filePath.replace(/\\/g, '/');
-
-            console.log('File URL:', fileUrl);
-
-            // Initialize waveform
-            await initializeWaveform(fileUrl);
-
-            // Dispatch custom event with the file path and URL for other components to listen to
-            window.dispatchEvent(new CustomEvent('audioFileLoaded', {
-                detail: { filePath, fileUrl }
-            }));
+function setupSpacebarControl() {
+    // spacebar controls playback
+    document.addEventListener("keydown", function(e){
+        if (e.code === "Space") {
+            e.preventDefault();
+            btnPlayPause.click();
         }
     });
 }
 
 document.addEventListener("DOMContentLoaded", function () {
     setupRangeOutputs();
-    setupPlayPauseButton();
-    setupAudioFileInput();
+    setupAudioElements();
+    setupTransport();
+    setupSpacebarControl();
 });

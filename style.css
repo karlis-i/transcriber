@@ -1,22 +1,23 @@
 
-#zoomview-container, #overview-container {
-  width: 100%;
-  height: 200px;
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
-}
-
-#overview-container {
-  height: 80px;
-  margin-top: 10px;
-}
-
-#audioElement {
+#audioFileInput {
     display: none;
 }
 
-#selectedFileName {
-    color: #666;
-    font-size: 0.9em;
-    margin-left: 10px;
+#zoomview-container, #overview-container {
+    width: 100%;
+}
+#overview-container {
+    height: 60px;
+    border-bottom: 1px solid #111111;
+}
+#zoomview-container {
+    height: 320px;
+}
+#scrollbar-container {
+  height: 16px;
+  background-color: #ccc;
+}
+
+.channel-selector {
+    letter-spacing: -0.25rem;
 }
