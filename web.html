@@ -27,7 +27,21 @@
 
 #zoomview-container, #overview-container {
     width: 100%;
-    height: 100px;
+}
+#overview-container {
+    height: 60px;
+    border-bottom: 1px solid #111111;
+}
+#zoomview-container {
+    height: 320px;
+}
+#scrollbar-container {
+  height: 16px;
+  background-color: #ccc;
+}
+
+.channel-selector {
+    letter-spacing: -0.25rem;
 }
         </style>
     </head>
@@ -36,26 +50,27 @@
 
         <!-- waveform -->
         <div>
-            <div class="container-lg" id="waveFormContainer">
-                <div id="zoomview-container"></div>
+            <div class="container-fluid" id="waveFormContainer">
                 <div id="overview-container"></div>
+                <div id="zoomview-container"></div>
+                <div id="scrollbar-container"></div>
             </div>
         </div>
 
 
         <!-- transport -->
         <div>
-            <div class="container-lg">
+            <div class="container-fluid">
                 <div class="row">
                     <div class="col-12 col-lg-6 order-lg-2 text-center">
                         <!-- 50% C -->
                         <div class="time_indicator">1:23:45 of 5:43:21</div>
                         <div>
-                            <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Rewind to Start">&#x23EE;</button>
-                            <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Rewind to Selection Start / Previous Marker">&#x23EA;</button>
-                            <button id="playPauseBtn" type="button" class="btn btn-primary btn-lg rounded-circle" aria-label="Play / Pause">&#x25B6; / &#x23F8;</button>
-                            <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Forward to Selection End / Next Marker">&#x23E9;</button>
-                            <button type="button" class="btn btn-secondary btn-lg rounded-circle" aria-label="Forward to End">&#x23ED;</button>
+                            <button id="btnRewind" type="button" class="btn btn-outline-secondary btn-lg" aria-label="Rewind to Start">&#x23EE;</button>
+                            <button type="button" class="btn btn-outline-secondary btn-lg" aria-label="Rewind to Selection Start / Previous Marker">&#x23EA;</button>
+                            <button id="btnPlayPause" type="button" class="btn btn-outline-primary btn-lg" aria-label="Play / Pause">&#x25B6;</button>
+                            <button type="button" class="btn btn-outline-secondary btn-lg" aria-label="Forward to Selection End / Next Marker">&#x23E9;</button>
+                            <button id="btnForward" type="button" class="btn btn-outline-secondary btn-lg" aria-label="Forward to End">&#x23ED;</button>
                         </div>
                         <!-- <div>
                             <button id="audioFileBtn">&#x23CF;</button>
@@ -75,45 +90,71 @@
                             <audio id="audioElement" crossorigin="anonymous"></audio>
                         </div>
                     </div>
+
+                    <!-- 25% L -->
                     <div class="col-12 col-lg-3 order-lg-1">
-                        <!-- 25% L -->
+                        <!-- Volume control -->
                         <div class="mb-3">
                             <label for="rangeVolume" class="form-label">Volume</label>
                             <output for="rangeVolume" id="outputVolume" aria-hidden="true" class="form-text float-end">100</output>
-                            <input type="range" class="form-range" min="0" max="127" step="1" value="100" id="rangeVolume">
+                            <input type="range" class="form-range" min="0" max="100" step="1" value="100" id="rangeVolume">
                         </div>
+
+                        <!-- Speed control -->
+                        <div class="mb-3">
+                            <label for="rangeSpeed" class="form-label">Playback speed</label>
+                            <output for="rangeSpeed" id="outputSpeed" aria-hidden="true" class="form-text float-end">100</output>
+                            <input type="range" class="form-range" min="25" max="125" step="5" value="100" id="rangeSpeed">
+                        </div>
+
+                        <a href="https://github.com/bbc/peaks.js/blob/master/doc/API.md" target="_blank" class="btn btn-info">&#x2754;</a>
                     </div>
+
+                    <!-- 25% R -->
                     <div class="col-12 col-lg-3 order-lg-3">
-                        <!-- 25% R -->
-                        .
+                        <!-- Pitch control -->
+                        <div class="mb-3">
+                            <label for="rangePitch" class="form-label">Pitch</label>
+                            <output for="rangePitch" id="outputPitch" aria-hidden="true" class="form-text float-end">0</output>
+                            <input type="range" class="form-range" min="-12" max="12" step="1" value="0" id="rangePitch">
+                        </div>
+
+                        <div class="mb-3 text-center">
+                            <label class="form-label float-start">Channel</label><br><br>
+                            <div class="btn-group mb-2" role="group" aria-label="Channel selector">
+                                <!-- Left -->
+                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelL" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelL" title="Left">&#x25FC;&#x25FC;&#x25FB;</label>
+
+                                <!-- Stereo -->
+                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelS" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelS" title="Stereo">&#x25FC;&#x25FC;&#x25FC;</label>
+
+                                <!-- Right -->
+                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelR" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelR" title="Right">&#x25FB;&#x25FC;&#x25FC;</label>
+                            </div>
+                            <br>
+                            <div class="btn-group" role="group" aria-label="Channel selector">
+                                <!-- Left only -->
+                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelLO" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelLO" title="Far Left">&#x25FC;&#x25FB;&#x25FB;</label>
+
+                                <!-- Center -->
+                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelC" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelC" title="Center">&#x25FB;&#x25FC;&#x25FB;</label>
+
+                                <!-- Right only -->
+                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelRO" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelRO" title="Far Right">&#x25FB;&#x25FB;&#x25FC;</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div> <!-- .container-lg -->
         </div>
 
-        Volume Down
-        Volume Level
-        Volume Up
 
-        Speed Down
-        Speed Level
-        Speed Up
-
-        Pitch Down
-        Pitch Level
-        Pitch Up
-
-        Zoom Out
-        Zoom Level
-        Zoom In
-
-        Mono
-        Stereo
-        Left Channel Only
-        Right Channel Only
-        Center Only
-        Stereo Minus Right Channel
-        Stereo Minus Left Channel
 
         <!-- Help > About -->
         <!-- <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalAbout">About</a> -->
@@ -168,8 +209,8 @@ function setupRangeOutputs() {
     // start listening
     volumeInput.addEventListener('input', function () {
         volume = this.value;
-        volumeOutput.textContent = this.value;
-        console.log("Volume", volume);
+        volumeOutput.textContent = volume;
+        audioElement.volume = volume / 100;
     });
 }
 
@@ -195,7 +236,6 @@ function setupAudioElements() {
 
     // when audio loaded
     audioFileInput.addEventListener('change', function(){
-        console.log(audioFile);
 
         // get file
         audioFile = audioFileInput.files[0];
@@ -208,6 +248,51 @@ function setupAudioElements() {
         audioElement.controls = true;
 
         drawWaveForm();
+
+        // remove focus from file input
+        audioFileInput.blur();
+    });
+}
+
+let btnPlayPause = null;
+let btnRewind = null;
+let btnForward = null;
+let playing = false;
+
+function setupTransport() {
+    btnPlayPause = document.getElementById("btnPlayPause");
+    btnRewind = document.getElementById("btnRewind");
+    btnForward = document.getElementById("btnForward");
+
+    const playString = "&#x25B6;";
+    const pauseString = "&#x23F8;";
+
+    // play/pause
+    btnPlayPause.addEventListener("click", function (){
+        if (audioElement.currentSrc) {
+            if (audioElement.paused) {
+                audioElement.play();
+                btnPlayPause.innerHTML = pauseString;
+                btnPlayPause.classList.remove("btn-outline-primary");
+                btnPlayPause.classList.add("btn-success");
+            } else {
+                audioElement.pause();
+                btnPlayPause.innerHTML = playString;
+                btnPlayPause.classList.remove("btn-success");
+                btnPlayPause.classList.add("btn-outline-primary");
+            }
+            playing = !playing;
+        }
+    });
+
+    // rewind
+    btnRewind.addEventListener("click", function(){
+        audioElement.currentTime = 0;
+    });
+
+    // forward
+    btnForward.addEventListener("click", function(){
+        audioElement.currentTime += 5;
     });
 }
 
@@ -222,6 +307,12 @@ function drawWaveForm() {
             overview: {
                 container: document.getElementById('overview-container')
             },
+            scrollbar: {
+                container: document.getElementById('scrollbar-container'),
+                color: '#888',
+                minWidth: 100
+            },
+            showPlayheadTime: true,
             mediaElement: audioElement,
             webAudio: {
                 audioContext: audioContext,
@@ -241,9 +332,21 @@ function drawWaveForm() {
     })(peaks);
 }
 
+function setupSpacebarControl() {
+    // spacebar controls playback
+    document.addEventListener("keydown", function(e){
+        if (e.code === "Space") {
+            e.preventDefault();
+            btnPlayPause.click();
+        }
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     setupRangeOutputs();
     setupAudioElements();
+    setupTransport();
+    setupSpacebarControl();
 });
 
 </script>
