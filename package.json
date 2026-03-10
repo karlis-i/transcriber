@@ -25,6 +25,7 @@
     "electron": "^40.1.0"
   },
   "dependencies": {
+    "@soundtouchjs/audio-worklet": "^1.0.7",
     "bootstrap": "^5.3.8",
     "konva": "^9.3.22",
     "peaks.js": "3.4.2",

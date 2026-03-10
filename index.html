@@ -71,7 +71,7 @@
                         <!-- Speed control -->
                         <div class="mb-3">
                             <label for="rangeSpeed" class="form-label">Playback speed</label>
-                            <output for="rangeSpeed" id="outputSpeed" aria-hidden="true" class="form-text float-end">100</output>
+                            <output for="rangeSpeed" id="outputSpeed" aria-hidden="true" class="form-text float-end">100%</output>
                             <input type="range" class="form-range" min="25" max="125" step="5" value="100" id="rangeSpeed">
                         </div>
 
@@ -153,6 +153,6 @@
         <script src="./node_modules/peaks.js/dist/peaks.min.js"></script>
         <!-- @todo move .js files to project root dir later -->
 
-        <script src="./renderer.js"></script>
+        <script type="module" src="./renderer.js"></script>
     </body>
 </html>

@@ -1,16 +1,143 @@
 
+// import worklet node for tempo/pitch processing (using relative path so module loader can locate it)
+import { SoundTouchNode } from './node_modules/@soundtouchjs/audio-worklet/dist/index.js';
+
 // Volume
 let volume = 100;
 let volumeInput = null;
 let volumeOutput = null;
 
+// playback speed (percent) and elements
+let speed = 100;
+let speedInput = null;
+let speedOutput = null;
+
+// pitch (semitones) and elements (future use)
+let pitch = 0;
+let pitchInput = null;
+let pitchOutput = null;
+
+// audio context and decoded buffer for SoundTouch playback
+let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioBuffer = null;
+
+// SoundTouch player adapter (custom Peaks player)
+let playerAdapter = null;
+let gainNode = null; // for volume control
+
 // Peaks.js waveform instance (global)
 let peaksInstance = null;
 let selectedSegment = null; // currently highlighted segment to loop
 
+/**
+ * Adapter implementing the Peaks player interface backed by SoundTouchJS.
+ * Controls playback of the decoded audioBuffer and reports time updates to
+ * Peaks so the waveform playhead stays in sync.
+ */
+class SoundTouchPlayerAdapter {
+    constructor(context, buffer) {
+        this.audioContext = context;
+        this.audioBuffer = buffer;
+        this.stNode = null;          // AudioWorklet node
+        this.source = null;          // current buffer source
+        this.currentTime = 0;
+        this.playing = false;
+        this.peaks = null;
+        this.playStartTime = 0;      // audioContext.currentTime when playback started
 
-// Speed
-// Pitch
+        // gainNode allows volume control
+        gainNode = this.audioContext.createGain();
+        gainNode.gain.value = volume / 100;
+        gainNode.connect(this.audioContext.destination);
+    }
+
+    async init(peaksInstance) {
+        this.peaks = peaksInstance;
+        // register the audio worklet processor
+        await SoundTouchNode.register(this.audioContext,
+            './node_modules/@soundtouchjs/audio-worklet/dist/soundtouch-processor.js');
+        this.stNode = new SoundTouchNode(this.audioContext);
+        this.stNode.connect(gainNode);
+        this.stNode.tempo.value = speed / 100;
+        return Promise.resolve();
+    }
+
+    _startPolling() {
+        const step = () => {
+            if (!this.playing) return;
+            this.currentTime = this.audioContext.currentTime - this.playStartTime;
+            this.peaks.emit('player.timeupdate', this.currentTime);
+            if (this.currentTime >= this.getDuration()) {
+                this.playing = false;
+                this.peaks.emit('player.ended');
+            } else {
+                requestAnimationFrame(step);
+            }
+        };
+        step();
+    }
+
+    play() {
+        if (this.playing) return Promise.resolve();
+        // create a fresh buffer source for each playback
+        this.source = this.audioContext.createBufferSource();
+        this.source.buffer = this.audioBuffer;
+        this.source.onended = () => {
+            this.playing = false;
+            this.peaks.emit('player.ended');
+        };
+        this.source.connect(this.stNode);
+        this.playStartTime = this.audioContext.currentTime - this.currentTime;
+        this.source.start(0, this.currentTime);
+        this.playing = true;
+        this.peaks.emit('player.playing', this.currentTime);
+        this._startPolling();
+        return Promise.resolve();
+    }
+
+    pause() {
+        if (!this.playing) return Promise.resolve();
+        if (this.source) {
+            this.source.stop();
+            this.source.disconnect();
+        }
+        this.playing = false;
+        this.peaks.emit('player.pause', this.currentTime);
+        return Promise.resolve();
+    }
+
+    seek(time) {
+        this.currentTime = time;
+        if (this.playing) {
+            return this.pause().then(() => this.play());
+        }
+        this.peaks.emit('player.seeked', time);
+        return Promise.resolve();
+    }
+
+    getCurrentTime() {
+        return this.currentTime;
+    }
+
+    getDuration() {
+        return this.audioBuffer ? this.audioBuffer.duration : 0;
+    }
+
+    isPlaying() {
+        return this.playing;
+    }
+
+    isSeeking() {
+        return false;
+    }
+
+    destroy() {
+        this.pause();
+        if (this.stNode) {
+            this.stNode.disconnect();
+        }
+    }
+}
 
 function setupRangeOutputs() {
     // Volume
@@ -26,8 +153,35 @@ function setupRangeOutputs() {
     volumeInput.addEventListener('input', function () {
         volume = this.value;
         volumeOutput.textContent = volume;
-        audioElement.volume = volume / 100;
+        if (gainNode) {
+            gainNode.gain.value = volume / 100;
+        }
     });
+
+    // Speed (tempo) control
+    // slider ranges 25–125 and represents percent of normal playback
+    speedInput = document.getElementById('rangeSpeed');
+    speedOutput = document.getElementById('outputSpeed');
+    if (speedInput && speedOutput) {
+        speedOutput.textContent = `${speedInput.value}%`;
+        speedInput.addEventListener('input', function () {
+            speed = parseInt(this.value, 10);
+            speedOutput.textContent = `${speed}%`;
+            applyPlaybackSpeed();
+        });
+    }
+
+    // Pitch - placeholder; library included but not used yet
+    pitchInput = document.getElementById('rangePitch');
+    pitchOutput = document.getElementById('outputPitch');
+    if (pitchInput && pitchOutput) {
+        pitchOutput.textContent = pitchInput.value;
+        pitchInput.addEventListener('input', function () {
+            pitch = parseInt(this.value, 10);
+            pitchOutput.textContent = pitch;
+            // pitch adjustment not implemented; SoundTouchJS could be used here
+        });
+    }
 }
 
 let audioFileInput = null;
@@ -43,6 +197,12 @@ function setupAudioElements() {
     audioFileLbl = document.getElementById('audioFileLbl');
     audioElement = document.getElementById('audioElement');
 
+    // the <audio> element is now only used for legacy display; playback is
+    // handled by our SoundTouch adapter, so we keep it paused.
+    if (audioElement) {
+        audioElement.controls = false;
+    }
+
     // use button instead of file input
     audioFileBtn.addEventListener('click', function(e){
         if (audioFileInput) {
@@ -50,7 +210,7 @@ function setupAudioElements() {
         }
     });
 
-    // when audio loaded
+    // when audio file selected
     audioFileInput.addEventListener('change', function(){
 
         // get file
@@ -59,14 +219,18 @@ function setupAudioElements() {
         // display filename
         audioFileLbl.value = audioFile.name;
 
-        // load file in audio element
-        audioElement.src = URL.createObjectURL(audioFile);
-        audioElement.controls = true;
-
-        // clear any previous loop segment
-        selectedSegment = null;
-
-        drawWaveForm();
+        // decode to AudioBuffer for SoundTouch and peaks
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const arrayBuffer = evt.target.result;
+            audioContext.decodeAudioData(arrayBuffer).then(buffer => {
+                audioBuffer = buffer;
+                // rebuild waveform / player
+                selectedSegment = null;  // clear any previous segment
+                drawWaveForm();
+            }).catch(err => console.error('decodeAudioData error', err));
+        };
+        reader.readAsArrayBuffer(audioFile);
 
         // remove focus from file input
         audioFileInput.blur();
@@ -88,30 +252,25 @@ function setupTransport() {
 
     // play/pause
     btnPlayPause.addEventListener("click", function (){
-        if (audioElement.currentSrc) {
-            if (audioElement.paused) {
-                // if we have a selected segment, play it with loop
-                if (selectedSegment && peaksInstance) {
-                    peaksInstance.player.playSegment(selectedSegment, true);
-                } else {
-                    audioElement.play();
-                }
-                btnPlayPause.innerHTML = pauseString;
-                btnPlayPause.classList.remove("btn-outline-primary");
-                btnPlayPause.classList.add("btn-success");
+        if (!peaksInstance) return;
+        // apply speed in case it changed
+        applyPlaybackSpeed();
+        if (peaksInstance.player.isPlaying()) {
+            peaksInstance.player.pause();
+            btnPlayPause.innerHTML = playString;
+            btnPlayPause.classList.remove("btn-success");
+            btnPlayPause.classList.add("btn-outline-primary");
+        } else {
+            if (selectedSegment) {
+                peaksInstance.player.playSegment(selectedSegment, true);
             } else {
-                // pause whichever player is active
-                if (selectedSegment && peaksInstance) {
-                    peaksInstance.player.pause();
-                } else {
-                    audioElement.pause();
-                }
-                btnPlayPause.innerHTML = playString;
-                btnPlayPause.classList.remove("btn-success");
-                btnPlayPause.classList.add("btn-outline-primary");
+                peaksInstance.player.play();
             }
-            playing = !playing;
+            btnPlayPause.innerHTML = pauseString;
+            btnPlayPause.classList.remove("btn-outline-primary");
+            btnPlayPause.classList.add("btn-success");
         }
+        playing = !playing;
     });
 
     // rewind
@@ -120,7 +279,9 @@ function setupTransport() {
             peaksInstance.player.pause();
             selectedSegment = null;
         }
-        audioElement.currentTime = 0;
+        if (peaksInstance) {
+            peaksInstance.player.seek(0);
+        }
     });
 
     // forward
@@ -129,14 +290,29 @@ function setupTransport() {
             peaksInstance.player.pause();
             selectedSegment = null;
         }
-        audioElement.currentTime += 5;
+        if (peaksInstance) {
+            const t = peaksInstance.player.getCurrentTime() + 5;
+            peaksInstance.player.seek(t);
+        }
     });
 }
 
 function drawWaveForm() {
-    const audioContext = new AudioContext();
+    if (!audioBuffer) {
+        console.warn('No audio buffer available for waveform');
+        return;
+    }
 
-    (function (Peaks) {
+    // destroy existing instance if any
+    if (peaksInstance) {
+        peaksInstance.destroy();
+        peaksInstance = null;
+    }
+
+    // before creating adapter we must register the audio worklet processor
+    SoundTouchNode.register(audioContext,
+        './node_modules/@soundtouchjs/audio-worklet/dist/soundtouch-processor.js')
+    .then(() => {
         const options = {
             zoomview: {
                 container: document.getElementById('zoomview-container'),
@@ -163,21 +339,27 @@ function drawWaveForm() {
                 minWidth: 100
             },
             showPlayheadTime: true,
-            mediaElement: audioElement,
+            // supply our custom player adapter rather than a media element
+            player: new SoundTouchPlayerAdapter(audioContext, audioBuffer),
             webAudio: {
                 audioContext: audioContext,
                 scale: 128,
-                multiChannel: true              // render separate left/right channels
+                multiChannel: true,             // render separate left/right channels
+                audioBuffer: audioBuffer
             }
         };
 
-        Peaks.init(options, function (err, peaks) {
+        (function (Peaks) {
+            Peaks.init(options, function (err, peaks) {
             if (err) {
                 console.error(`Failed to initialize Peaks instance: ${err.message}`);
                 return;
             }
 
             peaksInstance = peaks; // keep global reference
+            playerAdapter = options.player; // keep adapter reference if needed
+            // apply current speed setting to adapter
+            applyPlaybackSpeed();
 
             // populate zoom slider controls after instance ready
             setupZoomControl();
@@ -205,6 +387,7 @@ function drawWaveForm() {
             });
         });
     })(peaks);
+    }); // end of SoundTouchNode.register().then()
 }
 
 function setupZoomControl() {
@@ -272,6 +455,17 @@ function setupSpacebarControl() {
             btnPlayPause.click();
         }
     });
+}
+
+// adjust playback speed via SoundTouch adapter (tempo)
+function applyPlaybackSpeed() {
+    const rate = speed / 100;
+    if (playerAdapter && playerAdapter.stNode) {
+        playerAdapter.stNode.tempo.value = rate;
+    }
+    if (peaksInstance && peaksInstance.player && typeof peaksInstance.player.setPlaybackRate === 'function') {
+        try { peaksInstance.player.setPlaybackRate(rate); } catch {};
+    }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
