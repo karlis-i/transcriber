@@ -10,5 +10,6 @@ Used technologies:
 - [Node.js](https://nodejs.org/)
 - [Bootstrap](https://getbootstrap.com/)
 - [Peaks.js](https://github.com/bbc/peaks.js)
+    [Peaks.js API](https://github.com/bbc/peaks.js/blob/master/doc/API.md)
 - [SoundTouchJS](https://github.com/cutterbl/SoundTouchJS)
 
