@@ -5,11 +5,11 @@
         <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self'"
+            content="default-src 'self' file: blob:; script-src 'self' blob:; worker-src 'self' blob:; media-src 'self' file: blob:; connect-src 'self' file: blob:;"
         />
         <meta
             http-equiv="X-Content-Security-Policy"
-            content="default-src 'self'; script-src 'self'"
+            content="default-src 'self' file: blob:; script-src 'self' blob:; worker-src 'self' blob:; media-src 'self' file: blob:; connect-src 'self' file: blob:;"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Music Transcriber & Trainer</title>
