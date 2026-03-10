@@ -4,6 +4,11 @@ let volume = 100;
 let volumeInput = null;
 let volumeOutput = null;
 
+// Peaks.js waveform instance (global)
+let peaksInstance = null;
+let selectedSegment = null; // currently highlighted segment to loop
+
+
 // Speed
 // Pitch
 
@@ -58,6 +63,9 @@ function setupAudioElements() {
         audioElement.src = URL.createObjectURL(audioFile);
         audioElement.controls = true;
 
+        // clear any previous loop segment
+        selectedSegment = null;
+
         drawWaveForm();
 
         // remove focus from file input
@@ -82,12 +90,22 @@ function setupTransport() {
     btnPlayPause.addEventListener("click", function (){
         if (audioElement.currentSrc) {
             if (audioElement.paused) {
-                audioElement.play();
+                // if we have a selected segment, play it with loop
+                if (selectedSegment && peaksInstance) {
+                    peaksInstance.player.playSegment(selectedSegment, true);
+                } else {
+                    audioElement.play();
+                }
                 btnPlayPause.innerHTML = pauseString;
                 btnPlayPause.classList.remove("btn-outline-primary");
                 btnPlayPause.classList.add("btn-success");
             } else {
-                audioElement.pause();
+                // pause whichever player is active
+                if (selectedSegment && peaksInstance) {
+                    peaksInstance.player.pause();
+                } else {
+                    audioElement.pause();
+                }
                 btnPlayPause.innerHTML = playString;
                 btnPlayPause.classList.remove("btn-success");
                 btnPlayPause.classList.add("btn-outline-primary");
@@ -98,11 +116,19 @@ function setupTransport() {
 
     // rewind
     btnRewind.addEventListener("click", function(){
+        if (selectedSegment && peaksInstance) {
+            peaksInstance.player.pause();
+            selectedSegment = null;
+        }
         audioElement.currentTime = 0;
     });
 
     // forward
     btnForward.addEventListener("click", function(){
+        if (selectedSegment && peaksInstance) {
+            peaksInstance.player.pause();
+            selectedSegment = null;
+        }
         audioElement.currentTime += 5;
     });
 }
@@ -113,10 +139,23 @@ function drawWaveForm() {
     (function (Peaks) {
         const options = {
             zoomview: {
-                container: document.getElementById('zoomview-container')
+                container: document.getElementById('zoomview-container'),
+                // highlight segments with overlay when user drags
+                enableSegments: true,
+                segmentOptions: {
+                    markers: true,
+                    overlay: true,
+                    overlayColor: 'rgba(0, 123, 255, 0.3)' // blue-ish highlight
+                }
             },
             overview: {
-                container: document.getElementById('overview-container')
+                container: document.getElementById('overview-container'),
+                enableSegments: true,
+                segmentOptions: {
+                    markers: false,
+                    overlay: true,
+                    overlayColor: 'rgba(0, 123, 255, 0.2)'
+                }
             },
             scrollbar: {
                 container: document.getElementById('scrollbar-container'),
@@ -138,7 +177,29 @@ function drawWaveForm() {
                 return;
             }
 
-            // Do something when the waveform is displayed and ready
+            peaksInstance = peaks; // keep global reference
+
+            // enable user selection dragging on the zoom view
+            const view = peaks.views.getView('zoomview');
+            if (view) {
+                view.enableMarkerEditing(true);
+                view.setWaveformDragMode('insert-segment');
+                view.enableSegmentDragging(true);
+            }
+
+            // whenever the user inserts a segment (dragged region), remember it and remove previous selections
+            peaks.on('segments.insert', function(event) {
+                const segment = event.segment;
+                // delete old segments (keep only the new one)
+                const all = peaks.segments.getSegments();
+                all.forEach(s => {
+                    if (s.id !== segment.id) {
+                        peaks.segments.removeById(s.id);
+                    }
+                });
+                // store the segment but do NOT start playback yet
+                selectedSegment = segment;
+            });
         });
     })(peaks);
 }
