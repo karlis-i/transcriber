@@ -128,7 +128,7 @@ function drawWaveForm() {
             webAudio: {
                 audioContext: audioContext,
                 scale: 128,
-                multiChannel: false
+                multiChannel: true              // render separate left/right channels
             }
         };
 
