@@ -179,6 +179,9 @@ function drawWaveForm() {
 
             peaksInstance = peaks; // keep global reference
 
+            // populate zoom slider controls after instance ready
+            setupZoomControl();
+
             // enable user selection dragging on the zoom view
             const view = peaks.views.getView('zoomview');
             if (view) {
@@ -202,6 +205,42 @@ function drawWaveForm() {
             });
         });
     })(peaks);
+}
+
+function setupZoomControl() {
+    const zoomInput = document.getElementById('rangeZoom');
+    const zoomOutput = document.getElementById('outputZoom');
+    if (!zoomInput || !zoomOutput || !peaksInstance) return;
+
+    const zoomLevels = peaksInstance.options.zoomLevels || [];
+    if (zoomLevels.length === 0) return;
+
+    // configure slider
+    zoomInput.min = 0;
+    zoomInput.max = zoomLevels.length - 1;
+    zoomInput.step = 1;
+    zoomInput.value = zoomLevels.length - 1; // default to full waveform
+
+    function updateZoomDisplay(index) {
+        const samplesPerPixel = zoomLevels[index];
+        zoomOutput.textContent = `${samplesPerPixel} samp/px`;
+    }
+    updateZoomDisplay(zoomInput.value);
+
+    zoomInput.addEventListener('input', function() {
+        const idx = parseInt(this.value, 10);
+        if (peaksInstance) {
+            peaksInstance.zoom.setZoom(idx);
+            updateZoomDisplay(idx);
+        }
+    });
+
+    // keep slider in sync if zoom changed elsewhere
+    peaksInstance.on('zoom.update', function(event) {
+        const idx = event.currentZoomIndex !== undefined ? event.currentZoomIndex : event.currentZoom;
+        zoomInput.value = idx;
+        updateZoomDisplay(idx);
+    });
 }
 
 function setupSpacebarControl() {
