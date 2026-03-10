@@ -241,6 +241,27 @@ function setupZoomControl() {
         zoomInput.value = idx;
         updateZoomDisplay(idx);
     });
+
+    // @todo FIX THIS!!!
+    // allow mouse wheel over the zoom view container to adjust zoom level
+    const zoomViewEl = document.getElementById('zoomview-container');
+    if (zoomViewEl) {
+        zoomViewEl.addEventListener('wheel', function(e) {
+            // prevent the page from scrolling
+            e.preventDefault();
+            if (!peaksInstance) return;
+            const currentIdx = parseInt(zoomInput.value, 10);
+            // wheel down -> zoom out (lower index), wheel up -> zoom in
+            const delta = e.deltaY > 0 ? -1 : 1;
+            let newIdx = currentIdx + delta;
+            newIdx = Math.max(0, Math.min(zoomLevels.length - 1, newIdx));
+            if (newIdx !== currentIdx) {
+                zoomInput.value = newIdx;
+                peaksInstance.zoom.setZoom(newIdx);
+                updateZoomDisplay(newIdx);
+            }
+        });
+    }
 }
 
 function setupSpacebarControl() {
