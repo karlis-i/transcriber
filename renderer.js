@@ -8,6 +8,13 @@ let audioFileBtn = null;
 let audioFileLbl = null;
 let audioElement = null;
 let audioFile = null;
+let audioLoaded = false;
+
+const playString = "&#x25B6;";
+const pauseString = "&#x23F8;";
+
+const audioContext = new AudioContext();
+
 
 
 function setupAudioElements() {
@@ -15,7 +22,6 @@ function setupAudioElements() {
     audioFileInput = document.getElementById('audioFileInput');
     audioFileBtn = document.getElementById('audioFileBtn');
     audioFileLbl = document.getElementById('audioFileLbl');
-    audioElement = document.getElementById('audioElement');
 
     // use button instead of file input
     audioFileBtn.addEventListener('click', function(e){
@@ -33,40 +39,71 @@ function setupAudioElements() {
         // display filename
         audioFileLbl.value = audioFile.name;
 
+        // load file in audio element
+        audioElement.src = URL.createObjectURL(audioFile);
+        audioElement.controls = false; // ?
+
         // remove focus from file input
         audioFileInput.blur();
+
+        // context!
+
+        // pass the audio element into the audio context
+        const track = audioContext.createMediaElementSource(audioElement);
+
+        // connect node to output
+        track.connect(audioContext.destination);
+
+        // set loaded flag
+        audioLoaded = true;
+    });
+
+    audioElement.addEventListener("ended", function(){
+        playPausePaused();
     });
 }
 
 
 function setupTransport() {
-    btnPlayPause = document.getElementById("btnPlayPause");
-
-    const playString = "&#x25B6;";
-    const pauseString = "&#x23F8;";
 
     // play/pause
     btnPlayPause.addEventListener("click", function (){
 
-        if (!audioFile) {
+        // only active when audio file loaded
+        if (!audioLoaded) {
             return false;
         }
 
-        if (playing) {
-            //pause
-            btnPlayPause.innerHTML = playString;
-            btnPlayPause.classList.remove("btn-success");
-            btnPlayPause.classList.add("btn-outline-primary");
-        } else {
-            btnPlayPause.innerHTML = pauseString;
-            btnPlayPause.classList.remove("btn-outline-primary");
-            btnPlayPause.classList.add("btn-success");
+        // webaudio context
+        if (audioContext.state === "suspended") {
+            audioContext.resume();
         }
-        playing = !playing;
+
+        // Play or pause track depending on state
+        if (playing) {
+            audioElement.pause();
+            playPausePaused();
+        } else {
+            audioElement.play();
+            playPausePlaying();
+        }
 
     });
 }
 
+function playPausePlaying() {
+    playing = true;
+    btnPlayPause.innerHTML = pauseString;
+    btnPlayPause.classList.remove("btn-outline-primary");
+    btnPlayPause.classList.add("btn-success");
+}
+
+function playPausePaused() {
+    playing = false;
+    btnPlayPause.innerHTML = playString;
+    btnPlayPause.classList.remove("btn-success");
+    btnPlayPause.classList.add("btn-outline-primary");
+}
 
 function setupSpacebarControl() {
     // spacebar controls playback
@@ -79,6 +116,12 @@ function setupSpacebarControl() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+
+    // fetch elements that are used in multiple functions
+    btnPlayPause = document.getElementById("btnPlayPause");
+    audioElement = document.getElementById('audioElement');
+
+    // setup functions
     setupAudioElements();
     setupTransport();
     setupSpacebarControl();
