@@ -14,7 +14,8 @@ const playString = "&#x25B6;";
 const pauseString = "&#x23F8;";
 
 const audioContext = new AudioContext();
-
+let track = null;
+const gainNode = audioContext.createGain();
 
 
 function setupAudioElements() {
@@ -49,10 +50,10 @@ function setupAudioElements() {
         // context!
 
         // pass the audio element into the audio context
-        const track = audioContext.createMediaElementSource(audioElement);
+        track = audioContext.createMediaElementSource(audioElement);
 
         // connect node to output
-        track.connect(audioContext.destination);
+        track.connect(gainNode).connect(audioContext.destination);
 
         // set loaded flag
         audioLoaded = true;
@@ -115,6 +116,29 @@ function setupSpacebarControl() {
     });
 }
 
+
+// Volume
+let volume = 100;
+let volumeInput = null;
+let volumeOutput = null;
+
+function setupVolume() {
+    // assign DOM elements
+    volumeInput = document.getElementById('rangeVolume');
+    volumeOutput = document.getElementById('outputVolume');
+
+    // display init value
+    volumeOutput.textContent = volumeInput.value + "%";
+
+    // start listening
+    volumeInput.addEventListener('input', function () {
+        volume = this.value;
+        volumeOutput.textContent = volume + "%";
+        gainNode.gain.value = volume / 100;
+    });
+}
+
+
 document.addEventListener("DOMContentLoaded", function () {
 
     // fetch elements that are used in multiple functions
@@ -125,4 +149,5 @@ document.addEventListener("DOMContentLoaded", function () {
     setupAudioElements();
     setupTransport();
     setupSpacebarControl();
+    setupVolume();
 });
