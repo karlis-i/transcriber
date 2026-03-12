@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron/main')
+const { app, BrowserWindow } = require('electron/main')
 const path = require('node:path')
 
 // @todo ubuntu fix
@@ -11,9 +11,7 @@ const createWindow = () => {
     const win = new BrowserWindow({
         width: 1140,
         height: 690,
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js')
-        }
+        webPreferences: {}
     })
 
     win.loadFile('index.html')
@@ -21,21 +19,6 @@ const createWindow = () => {
     // dev tools
     win.webContents.openDevTools()
 }
-
-// Handle file open dialog
-ipcMain.handle('dialog:openFile', async () => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-        properties: ['openFile'],
-        filters: [
-            { name: 'Audio Files', extensions: ['mp3', 'wav', 'flac', 'm4a', 'ogg'] },
-            { name: 'All Files', extensions: ['*'] }
-        ]
-    })
-    if (!canceled) {
-        return filePaths[0]
-    }
-    return null
-})
 
 app.whenReady().then(() => {
     createWindow()

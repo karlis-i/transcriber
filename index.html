@@ -1,36 +1,30 @@
 <!doctype html>
 <html lang="en">
+
     <head>
         <meta charset="utf-8">
         <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-        <meta
-            http-equiv="Content-Security-Policy"
-            content="default-src 'self' file: blob:; script-src 'self' blob:; worker-src 'self' blob:; media-src 'self' file: blob:; connect-src 'self' file: blob:;"
-        />
-        <meta
-            http-equiv="X-Content-Security-Policy"
-            content="default-src 'self' file: blob:; script-src 'self' blob:; worker-src 'self' blob:; media-src 'self' file: blob:; connect-src 'self' file: blob:;"
-        />
+        <meta http-equiv="Content-Security-Policy"
+            content="default-src 'self' file: blob:; script-src 'self' blob:; worker-src 'self' blob:; media-src 'self' file: blob:; connect-src 'self' file: blob:;" />
+        <meta http-equiv="X-Content-Security-Policy"
+            content="default-src 'self' file: blob:; script-src 'self' blob:; worker-src 'self' blob:; media-src 'self' file: blob:; connect-src 'self' file: blob:;" />
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Music Transcriber & Trainer</title>
-        <link
-            href="./node_modules/bootstrap/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-        >
-        <!-- @todo move .css files to project root dir later -->
-        <link href="./style.css" rel="stylesheet">
+
+        <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="./style.css" />
     </head>
 
     <body>
 
         <!-- waveform -->
-        <div>
+        <!-- <div>
             <div class="container-fluid" id="waveFormContainer">
                 <div id="overview-container"></div>
                 <div id="zoomview-container"></div>
                 <div id="scrollbar-container"></div>
             </div>
-        </div>
+        </div> -->
 
 
         <!-- transport -->
@@ -39,13 +33,13 @@
                 <div class="row">
                     <div class="col-12 col-lg-6 order-lg-2 text-center">
                         <!-- 50% C -->
-                        <div class="time_indicator">1:23:45 of 5:43:21</div>
+                        <!-- <div class="time_indicator">1:23:45 of 5:43:21</div> -->
                         <div>
-                            <button id="btnRewind" type="button" class="btn btn-outline-secondary btn-lg" aria-label="Rewind to Start">&#x23EE;</button>
-                            <button type="button" class="btn btn-outline-secondary btn-lg" aria-label="Rewind to Selection Start / Previous Marker">&#x23EA;</button>
+                            <!-- <button id="btnRewind" type="button" class="btn btn-outline-secondary btn-lg" aria-label="Rewind to Start">&#x23EE;</button> -->
+                            <!-- <button type="button" class="btn btn-outline-secondary btn-lg" aria-label="Rewind to Selection Start / Previous Marker">&#x23EA;</button> -->
                             <button id="btnPlayPause" type="button" class="btn btn-outline-primary btn-lg" aria-label="Play / Pause">&#x25B6;</button>
-                            <button type="button" class="btn btn-outline-secondary btn-lg" aria-label="Forward to Selection End / Next Marker">&#x23E9;</button>
-                            <button id="btnForward" type="button" class="btn btn-outline-secondary btn-lg" aria-label="Forward to End">&#x23ED;</button>
+                            <!-- <button type="button" class="btn btn-outline-secondary btn-lg" aria-label="Forward to Selection End / Next Marker">&#x23E9;</button> -->
+                            <!-- <button id="btnForward" type="button" class="btn btn-outline-secondary btn-lg" aria-label="Forward to End">&#x23ED;</button> -->
                         </div>
 
                         <div class="mb-3">
@@ -62,64 +56,64 @@
                     <!-- 25% L -->
                     <div class="col-12 col-lg-3 order-lg-1">
                         <!-- Volume control -->
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="rangeVolume" class="form-label">Volume</label>
                             <output for="rangeVolume" id="outputVolume" aria-hidden="true" class="form-text float-end">100</output>
                             <input type="range" class="form-range" min="0" max="100" step="1" value="100" id="rangeVolume">
-                        </div>
+                        </div> -->
 
                         <!-- Speed control -->
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="rangeSpeed" class="form-label">Playback speed</label>
                             <output for="rangeSpeed" id="outputSpeed" aria-hidden="true" class="form-text float-end">100%</output>
                             <input type="range" class="form-range" min="25" max="125" step="5" value="100" id="rangeSpeed">
-                        </div>
+                        </div> -->
 
                         <!-- Waveform zoom -->
-                         <div class="mb-3">
+                         <!-- <div class="mb-3">
                             <label for="rangeZoom" class="form-label">Zoom</label>
                             <output for="rangeZoom" id="outputZoom" aria-hidden="true" class="form-text float-end"></output>
                             <input type="range" class="form-range" min="" max="" step="" value="" id="rangeZoom">
-                        </div>
+                        </div> -->
                     </div>
 
                     <!-- 25% R -->
                     <div class="col-12 col-lg-3 order-lg-3">
                         <!-- Pitch control -->
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="rangePitch" class="form-label">Pitch</label>
                             <output for="rangePitch" id="outputPitch" aria-hidden="true" class="form-text float-end">0</output>
                             <input type="range" class="form-range" min="-12" max="12" step="1" value="0" id="rangePitch">
-                        </div>
+                        </div> -->
 
                         <div class="mb-3 text-center">
-                            <label class="form-label float-start">Channel</label><br><br>
-                            <div class="btn-group mb-2" role="group" aria-label="Channel selector">
+                            <!-- <label class="form-label float-start">Channel</label><br><br> -->
+                            <!-- <div class="btn-group mb-2" role="group" aria-label="Channel selector"> -->
                                 <!-- Left -->
-                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelL" autocomplete="off">
-                                <label class="btn btn-outline-primary channel-selector" for="radioChannelL" title="Left">&#x25FC;&#x25FC;&#x25FB;</label>
+                                <!-- <input type="radio" class="btn-check" name="radioChannel" id="radioChannelL" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelL" title="Left">&#x25FC;&#x25FC;&#x25FB;</label> -->
 
                                 <!-- Stereo -->
-                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelS" autocomplete="off" checked>
-                                <label class="btn btn-outline-primary channel-selector" for="radioChannelS" title="Stereo">&#x25FC;&#x25FC;&#x25FC;</label>
+                                <!-- <input type="radio" class="btn-check" name="radioChannel" id="radioChannelS" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelS" title="Stereo">&#x25FC;&#x25FC;&#x25FC;</label> -->
 
                                 <!-- Right -->
-                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelR" autocomplete="off">
-                                <label class="btn btn-outline-primary channel-selector" for="radioChannelR" title="Right">&#x25FB;&#x25FC;&#x25FC;</label>
+                                <!-- <input type="radio" class="btn-check" name="radioChannel" id="radioChannelR" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelR" title="Right">&#x25FB;&#x25FC;&#x25FC;</label> -->
                             </div>
                             <br>
                             <div class="btn-group" role="group" aria-label="Channel selector">
                                 <!-- Left only -->
-                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelLO" autocomplete="off">
-                                <label class="btn btn-outline-primary channel-selector" for="radioChannelLO" title="Far Left">&#x25FC;&#x25FB;&#x25FB;</label>
+                                <!-- <input type="radio" class="btn-check" name="radioChannel" id="radioChannelLO" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelLO" title="Far Left">&#x25FC;&#x25FB;&#x25FB;</label> -->
 
                                 <!-- Center -->
-                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelC" autocomplete="off">
-                                <label class="btn btn-outline-primary channel-selector" for="radioChannelC" title="Center">&#x25FB;&#x25FC;&#x25FB;</label>
+                                <!-- <input type="radio" class="btn-check" name="radioChannel" id="radioChannelC" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelC" title="Center">&#x25FB;&#x25FC;&#x25FB;</label> -->
 
                                 <!-- Right only -->
-                                <input type="radio" class="btn-check" name="radioChannel" id="radioChannelRO" autocomplete="off">
-                                <label class="btn btn-outline-primary channel-selector" for="radioChannelRO" title="Far Right">&#x25FB;&#x25FB;&#x25FC;</label>
+                                <!-- <input type="radio" class="btn-check" name="radioChannel" id="radioChannelRO" autocomplete="off">
+                                <label class="btn btn-outline-primary channel-selector" for="radioChannelRO" title="Far Right">&#x25FB;&#x25FB;&#x25FC;</label> -->
                             </div>
                         </div>
                     </div>
@@ -127,32 +121,7 @@
             </div> <!-- .container-lg -->
         </div>
 
-        <!-- Help > About -->
-        <!-- <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalAbout">About</a> -->
-        <div class="modal fade" id="modalAbout" tabindex="-1" aria-labelledby="modalAboutLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="modalAboutLabel">About</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Music Transcriber &amp; Trainer</p>
-                        <p>v0.1</p>
-                        <p><a href="https://www.github.com/karlis-i" target="_blank">https://www.github.com/karlis-i</a></p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="./node_modules/peaks.js/dist/peaks.min.js"></script>
-        <!-- @todo move .js files to project root dir later -->
-
         <script type="module" src="./renderer.js"></script>
     </body>
+
 </html>
