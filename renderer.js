@@ -9,6 +9,11 @@ let audioFileLbl = null;
 let audioElement = null;
 let audioFile = null;
 let audioLoaded = false;
+let isStereo = false;
+
+let channelSelectorL = null;
+let channelSelectorS = null;
+let channelSelectorR = null;
 
 const playString = "&#x25B6;";
 const pauseString = "&#x23F8;";
@@ -32,7 +37,9 @@ function setupAudioElements() {
     });
 
     // when audio file selected
-    audioFileInput.addEventListener('change', function(){
+    audioFileInput.addEventListener('change', async function(){
+
+        // @todo: loading another file crashes app
 
         // get file
         audioFile = audioFileInput.files[0];
@@ -57,6 +64,23 @@ function setupAudioElements() {
 
         // set loaded flag
         audioLoaded = true;
+
+        // check if stereo
+        // why buffers?
+        const arrayBuffer = await audioFile.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        const channels = audioBuffer.numberOfChannels;
+        isStereo = channels === 2;
+
+        if (isStereo) {
+            channelSelectorL.disabled = false;
+            channelSelectorS.disabled = false;
+            channelSelectorR.disabled = false;
+        } else {
+            channelSelectorL.disabled = true;
+            channelSelectorS.disabled = true;
+            channelSelectorR.disabled = true;
+        }
     });
 
     audioElement.addEventListener("ended", function(){
@@ -138,6 +162,57 @@ function setupVolume() {
     });
 }
 
+function setupChannelSelector() {
+
+    channelSelectorL.addEventListener("change", function(){
+        console.log("left channel selected");
+
+        track.disconnect();
+        gainNode.disconnect();
+        audioContext.destination.disconnect();
+        // Split the stereo signal into separate L and R channels
+        const splitter = audioContext.createChannelSplitter(2);
+
+        // Merge back into stereo, but using left channel for both outputs
+        const merger = audioContext.createChannelMerger(2);
+
+        // Wire it up
+        track.connect(gainNode).connect(splitter);
+
+        splitter.connect(merger, 0, 0); // left  → left
+        splitter.connect(merger, 0, 1); // left  → right (ignore right channel)
+
+        merger.connect(audioContext.destination);
+    });
+    channelSelectorS.addEventListener("change", function(){
+        console.log("stereo channel selected");
+        track.disconnect();
+        gainNode.disconnect();
+        audioContext.destination.disconnect();
+        track.connect(gainNode).connect(audioContext.destination);
+    });
+    channelSelectorR.addEventListener("change", function(){
+        console.log("right channel selected");
+        track.disconnect();
+        gainNode.disconnect();
+        audioContext.destination.disconnect();
+        // Split the stereo signal into separate L and R channels
+        const splitter = audioContext.createChannelSplitter(2);
+
+        // Merge back into stereo, but using left channel for both outputs
+        const merger = audioContext.createChannelMerger(2);
+
+        // Wire it up
+        track.connect(gainNode).connect(splitter);
+
+        splitter.connect(merger, 1, 0); // right  → left
+        splitter.connect(merger, 1, 1); // right  → right (ignore left channel)
+
+        merger.connect(audioContext.destination);
+    });
+
+}
+
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -145,9 +220,14 @@ document.addEventListener("DOMContentLoaded", function () {
     btnPlayPause = document.getElementById("btnPlayPause");
     audioElement = document.getElementById('audioElement');
 
+    channelSelectorL = document.getElementById("radioChannelL");
+    channelSelectorS = document.getElementById("radioChannelS");
+    channelSelectorR = document.getElementById("radioChannelR");
+
     // setup functions
     setupAudioElements();
     setupTransport();
     setupSpacebarControl();
     setupVolume();
+    setupChannelSelector();
 });
