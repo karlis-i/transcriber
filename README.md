@@ -13,3 +13,7 @@ Used technologies:
     [Peaks.js API](https://github.com/bbc/peaks.js/blob/master/doc/API.md)
 - [SoundTouchJS](https://github.com/cutterbl/SoundTouchJS)
 
+---
+
+Possibly useful:
+- https://web.dev/articles/webaudio-intro
